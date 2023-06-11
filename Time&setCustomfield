@@ -1,0 +1,38 @@
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.event.type.EventDispatchOption
+import com.atlassian.jira.issue.MutableIssue
+import com.azadi.jalalicalendar.JalaliCalendar
+import com.atlassian.jira.user.ApplicationUser;
+import java.util.Date
+import java.util.Calendar;
+import java.util.*;
+import java.text.SimpleDateFormat
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.MutableIssue
+
+String strIssueKey = (String) issue.key
+def issueManager = ComponentAccessor.getIssueManager();
+def customFieldManagers = ComponentAccessor.getCustomFieldManager()
+
+def cf = customFieldManagers.getCustomFieldObject("customfield_16123")
+
+
+// Set Tommorow date for New Assign Time
+
+def deadline1_NewAssignTime = new java.sql.Timestamp((new Date() + 2) .getTime())
+    
+def new_date_NewAssignTime = new SimpleDateFormat("yyyy-MM-dd HH:mm")
+def pattern_NewAssignTime = "yyyy-MM-dd HH:mm"
+def input_NewAssignTime = new_date_NewAssignTime.format(deadline1_NewAssignTime)
+def date_NewAssignTime = new SimpleDateFormat(pattern_NewAssignTime).parse(input_NewAssignTime)
+issue.setCustomFieldValue(cf,date_NewAssignTime.toTimestamp())
+
+
+
+
+
+
+
