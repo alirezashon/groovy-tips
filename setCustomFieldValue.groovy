@@ -15,3 +15,9 @@ def simRes = customFieldManager.getCustomFieldObject("customfield_21901")
         issue.setCustomFieldValue(simRes,data[3].toString()+"&"+assetCode.toString())
         break
     }
+
+//set value for custom field type select list single choice 
+def cf0 = customFieldManager.getCustomFieldObject("customfield_22445")
+def asset_check  = (String)issue.getCustomFieldValue(cf0)
+def cfConfig = cf0.getRelevantConfig(issue)
+value = ComponentAccessor.optionsManager.getOptions(cfConfig)?.find { it.toString() == '1' }
