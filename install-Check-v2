@@ -1,0 +1,147 @@
+import com.atlassian.jira.issue.Issue
+import groovyx.net.http.HTTPBuilder;
+import groovyx.net.http.ContentType;
+import com.opensymphony.workflow.InvalidInputException
+import static groovyx.net.http.Method.*
+import groovy.json.JsonSlurper 
+import com.atlassian.jira.component.ComponentAccessor
+def issueManager = ComponentAccessor.getIssueManager();
+Issue issueKey  = issue
+def customFieldManager = ComponentAccessor.getCustomFieldManager()
+def currentkey = "${issue.key}"
+def Agent_Code = (String)issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_23507")) 
+def cpeRes = (String)issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_21902")) 
+def simRes = (String)issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_21901")) 
+def accessoryRes = (String)issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_21900")) 
+def RoundUpAssets = (String)issue.getCustomFieldValue(customFieldManager.getCustomFieldObject("customfield_23523")) 
+
+//--------------API-SAMPLE------------------------------
+class Update {
+    String location
+    String key = "lHvpvXqxo6g38q2Uzi8KrTPNar_oW129dM3w2daLKOhKkrPJF1sNN4WlaaJe2qX86fJx0ga2Q8gsH7hgBbdtQcKrb3icoJODW6o2pZOYa5IQMP_NpZEAc2JIGA-WSagESVmPOww3le4Ag99c5IuSWEtoF3McGTHw2wgTnAyoeYcuEcSn-Wmz57dydBSsg5bY44A2YZNZrwbZFaCFzvqY3yZdDjinqdMqp94nDenV1X1K-oG1MRuegGrx33jmgzZ3B5QtOPHFzXSmu7KnZZydJsYV_LyWI-aLNvd51EUYg_z3XtgELRAPC0Odz56A-QPkE7wuKgtn9mDtG32L5RjS7Q_MDcjgnSXxVPZEhsLcmxVgGDPO4oO7-n2nMDL7gb_N7HYPFqRsUQsX9_JPYqDZkzE_ImIWOoYw97JBsiTuXzygBFQeQbHkh75z_CZUY0CBTor83ooTT_uIPwy9kmy0t9maNuxWN7OSW95wibv_rJMTTxiVgdCQnddYMLNMyxWFVodInetbzQQ-6ohEWUifvTKWq2hKrWCwc-jFqn3lIuFnJDQhzvIveif11lrEKj-yQYxk8eG8vUwOJbjDuz-JdAl68D-AKSsbKf1QqOTYwlv-qboKL3wjaPuFRnvtYUnkDfjptvQlTCszgccXvBL2cH9TpTAnTrRYChWVqOy8byTUjPoNvbPvQ9g4TSnuvhd6mnKZOpIxXhBQaqiQHhLnQUdhO-DrzX5ONzu1B_BGMGao81O_8hy6WrYx9Pz18tfN2qdSI55B121uUs7fbEyO8zxGFGjKjLCsS8qV25_Zgs-CKXv8lE6njVXKp84d-H-2ZdlIjENbp83OmIej0U3T9sngCRTBTSu7kopQcpDk5UGP48goqwrrJ41Y3nUdVUW9UCRFyqZV8pX3XFnn-Uh74juf75Wvk-8Vqpl2EQbKCd3Ka7my56ALsiB3K1cNWVUfCHmluHwc0NzwQSzY4jdEfcZlj9KVf3rcmZ94bWQnXng1OYI7QCJnVyGjDcTnaHe58-WJ3srCJg9t6dxRly-Iy-6obFSUfldX3QOEmYO4pGwLdMCvrcKhhmFMySNdT6MDPrrAsQ"
+    def makeRequest(String url, String requestBody) {
+        def http = new HTTPBuilder("http://10.104.26.112:81/api/${url}")
+        http.request(POST, ContentType.JSON) {
+            requestContentType = ContentType.JSON
+            request.addHeader("ContentType", "application/json")
+            request.addHeader("Authorization", "bearer ${key}")
+            def parser = new JsonSlurper()
+            def jsonBody = parser.parseText(requestBody)
+            body = jsonBody
+            response.success = { resp, JSON ->
+                return JSON.Message
+            }
+        }
+    }
+   def updateAsset(String code, String status, String customerDetails, String childAssetCode, String customerName, String agentCode, String isRemoveLink, String allottedTo, String settlementType) {
+        def requestBody = """
+            {
+                "userId": "3198",
+                "assetcode": "${code}",
+                "status": "${status}",
+                "Location": "${location}",
+                "CustomerDetails": "${customerDetails}",
+                "ChildAssetcode": "${childAssetCode}",
+                "CustomerName": "${customerName}",
+                "AgentCode": "${agentCode}",
+                "IsRemoveLink": "1",
+                "AllottedTo": "3106",
+                "SettlementType": "${settlementType}" }"""
+     	 makeRequest("AssetInstallation", requestBody)}
+    
+     def RoundUpAsset( String code, String agentCode, String childCode ) {
+        def requestBody = """
+            {
+                "userId": "3198",
+                "assetcode": "${code}",
+                "status": "Contractor---Round up",
+                "AgentCode": "${agentCode}",
+                "IsRemoveLink": "0",
+                "ChildAssetcode":"${childCode}",
+                "AllottedTo": "3107",
+ 			}"""  
+     	 makeRequest("AssetInstallation", requestBody)}
+  
+    def linkAsset(String cpeAssetCode, String simAssetCode) {
+        def requestBody = """
+            {
+                "userId": "3198",
+                "assetList": [{
+                    "assetcode": "${cpeAssetCode}",
+                    "linkassetcode": "${simAssetCode}"
+                }]} """
+      makeRequest("linkAsset", requestBody)
+    }
+    def updateStatus(String assetCode, String status, String remark) {
+        def requestBody = """
+            {
+                "userId": "3198",
+                "assetcode": "${assetCode}",
+                "status": "${status}",
+                "location": "${location}",
+                "allottedto": "customer@test.ir",
+                "isCustomUpdate": true,
+                "remark": "${remark}"
+            } """
+        makeRequest("updateAssetStatus", requestBody)
+    } }
+def statusChecker(response,test){
+	def statusCodes = [[1,"Transfer To is required if status type is Transferred (Allotted)"],[4,"Location is required."],[6,"Invalid vendor."],[7,"Invalid status."],[400,"Bad Request"],[9,"Allotted to user required"],[21,"Invalid location."],[24,"Status is required"],[34,"Successful"],[37,"Invalid department."],[42,"Invalid User"],[45,"Transferred To user does not exist in the selected location or department"],[51,"Invalid Asset Code"],[52,"Invalid linked asset code"],[54,"Linked asset required"],[121,"Can not transfer child assets. Please deselect child assets to continue transfer"],[152,"Asset code is required."],[283,"Asset Name cannot be transferred as workflow has already been triggered for these asset(s)"],[1003,"Link asset mismatch"],[1004,"Given asset does not assign to agent"]]
+    for (int i = 0; i < statusCodes.size(); i++) {
+    if("${response}" == statusCodes[i][0]){
+        log.error("${statusCodes[i][1]}")
+        log.warn(test)
+ }}}
+// Example usage
+def myClass = new Update()
+myClass.location = "Customer Location > Region 4 > Esfahan > Esfahan"
+
+
+
+   if(accessoryRes){
+      statusChecker(myClass.updateAsset( "${accessoryRes.split("&")[1]}", "Customer---Installation consum","currentkey" ,"" ,  "AZ", "10000000", "1", "3106", "testeeeee"),1) 
+    }
+
+
+if(cpeRes.split("_")[0] == "NEW" && simRes.split("_")[0] == "NEW" ){
+    statusChecker(myClass.updateAsset( "${cpeRes.split("&")[1]}", "Customer---Installation consum", "currentkey", "${simRes.split("&")[1]}", "AZ", "10000000", "1", "3106", "testeeeee"),2)
+}
+if(cpeRes.split("_")[0] == "OLD" && simRes.split("_")[0] == "OLD" ){
+	statusChecker(myClass.updateStatus("${cpeRes.split("&")[1]}", "Customer---Installation consum", "remark1"),3)
+	statusChecker(myClass.linkAsset("${cpeRes.split("&")[1]}", "${simRes.split("&")[1]}"),4)
+}
+if(cpeRes.split("_")[0] == "OLD" && simRes.split("_")[0] == "NEW" ){
+	statusChecker(myClass.updateAsset( "${simRes.split("&")[1]}", "Customer---Installation consum", "currentkey", "", "AZ", "10000000", "1", "3106", "testeeeee"),5)   
+    statusChecker(myClass.updateStatus("${cpeRes.split("&")[1]}", "Customer---Installation consum", "remark1"),6)
+	statusChecker(myClass.linkAsset("${cpeRes.split("&")[1]}", "${simRes.split("&")[1]}"),7)
+}
+if(cpeRes.split("_")[0] == "NEW" && simRes.split("_")[0] == "OLD" ){
+	statusChecker(myClass.updateAsset( "${cpeRes.split("&")[1]}", "Customer---Installation consum", "currentkey", "", "AZ", "10000000", "1", "3106", "testeeeee"),8)   
+    statusChecker(myClass.updateStatus("${simRes.split("&")[1]}", "Customer---Installation consum", "remark1"),9)
+	statusChecker(myClass.linkAsset("${cpeRes.split("&")[1]}", "${simRes.split("&")[1]}"),10)
+}
+
+
+//-------------------------Round UP------------------------------
+if(RoundUpAssets){
+if(RoundUpAssets.split("&")[0] && RoundUpAssets.split("&")[1]){
+statusChecker(myClass.RoundUpAsset( "${RoundUpAssets.split("&")[0]}", "10000000","${RoundUpAssets.split("&")[1]}"),13) 
+}
+else if(RoundUpAssets.split("&")[0]){
+statusChecker(myClass.RoundUpAsset("${RoundUpAssets.split("&")[0]}", "10000000",""),11) 
+}
+else if(RoundUpAssets.split("&")[1]){
+statusChecker(myClass.RoundUpAsset("${RoundUpAssets.split("&")[1]}", "10000000",""),12) 
+}
+
+
+else if(RoundUpAssets.split("&")[2]){
+statusChecker(myClass.RoundUpAsset( "${RoundUpAssets.split("&")[2]}", "10000000",""),14) 
+}
+
+}
+
+
+
+
+        
