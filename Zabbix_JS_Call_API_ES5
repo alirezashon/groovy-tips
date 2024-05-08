@@ -1,0 +1,60 @@
+try {
+    Zabbix.log(4, 'calling API script');
+  
+    var result = {
+        'tags': {
+            'endpoint': 'your_api_endpoint'
+        }
+    };
+    
+    // Set your API endpoint
+    var apiUrl = "protocol://ip:port/path";
+    //var now = new Date().toISOString().slice(0, 19).replace('T', ' '); 
+     var now = new Date(Date.now() + 12300000).toISOString().slice(0, 19).replace('T', ' ');
+     var lastHour = new Date(Date.now() + 11400000).toISOString().slice(0, 19).replace('T', ' ');
+
+    // Set your request parameters
+    var params = {
+        "tag": "RATE",
+        "label": "PANEL_Q_DELAYED_PARTS_COUNT",
+        "fromTime": lastHour,
+        "toTime": now
+    };
+    
+    var req = new HttpRequest();
+    req.addHeader('Content-Type: application/json');
+    req.addHeader('Authorization: Basic ' + params.authentication); // Add authentication if required
+    
+    // Send the POST request
+    var resp = req.post(apiUrl, JSON.stringify(params));
+  
+    if (req.getStatus() != 200) {
+        throw 'Response code: ' + req.getStatus();
+    }
+  
+    var respData = JSON.parse(resp);
+    result.tags.response_data = respData; // Store response data
+  
+} catch (error) {
+    Zabbix.log(4, 'API request failed: ' + error);
+    result = {};
+}
+const datum = JSON.stringify(result);
+
+const testali = JSON.parse(datum).tags.response_data.records;
+const ostali = [];
+
+testali.forEach(function(element) {
+    if (element.hasOwnProperty('amount')) {
+        ostali.push(element.amount);
+    }
+});
+var status = true;
+
+ostali.forEach(function(num,index,array) {
+    if (index > 0 && (num > array[index - 1] || num === array[index - 1])) {
+        status = false;
+    }});
+
+
+return status;
