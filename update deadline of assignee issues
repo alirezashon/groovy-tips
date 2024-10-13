@@ -1,0 +1,72 @@
+import com.atlassian.jira.component.ComponentAccessor
+import com.atlassian.jira.issue.Issue
+import com.atlassian.jira.issue.MutableIssue
+import com.atlassian.jira.issue.util.DefaultIssueChangeHolder
+import com.atlassian.jira.issue.ModifiedValue
+import com.atlassian.jira.bc.issue.search.SearchService
+import com.atlassian.jira.web.bean.PagerFilter
+import com.atlassian.query.Query
+import com.atlassian.jira.jql.parser.JqlQueryParser
+import com.atlassian.jira.user.ApplicationUser
+import java.util.Date
+
+// گرفتن issue فعلی
+Issue issue = issue
+
+log.warn("Current issue: " + issue)
+
+// چک کردن اینکه Priority بلاکر است
+if (issue.getPriorityObject().getName() == "Highest") {
+    // گرفتن assignee از issue
+    ApplicationUser assignee = issue.getAssignee()
+    
+    if (assignee) {
+        // گرفتن IssueSearchService و JqlQueryParser
+        def searchService = ComponentAccessor.getComponent(SearchService)
+        def jqlQueryParser = ComponentAccessor.getComponent(JqlQueryParser)
+
+        // ساختن کوئری JQL برای گرفتن تمام ایشوهای مربوط به assignee
+        String jqlQuery = "assignee = '${assignee.getUsername()}'"
+        Query query = jqlQueryParser.parseQuery(jqlQuery)
+
+        // اجرای جستجو با استفاده از searchService
+        def user = ComponentAccessor.getJiraAuthenticationContext().getLoggedInUser()
+        def searchResult = searchService.search(user, query, PagerFilter.getUnlimitedFilter())
+        
+        def assignedIssues = searchResult.getResults()
+        log.warn("Assigned issues: " + assignedIssues)
+
+        // تبدیل DocumentIssueImpl به MutableIssue
+        def issueManager = ComponentAccessor.getIssueManager()
+        assignedIssues.each { issueDocument ->
+            MutableIssue assignedIssue = issueManager.getIssueObject(issueDocument.id)
+            
+            if (assignedIssue) {
+                def deadlineField = ComponentAccessor.getCustomFieldManager().getCustomFieldObjectByName("deadline")
+                
+                log.warn("Deadline field: " + deadlineField)
+
+                if (deadlineField && assignedIssue.getCustomFieldValue(deadlineField)) {
+                    Date currentDeadline = assignedIssue.getCustomFieldValue(deadlineField) as Date
+                    log.warn("Current deadline: " + currentDeadline)
+
+                    if (currentDeadline != null) {
+                        Date newDeadline = currentDeadline + 1
+                        log.warn("New deadline: " + newDeadline)
+                        
+                        // تغییر deadline با استفاده از DefaultIssueChangeHolder
+                        assignedIssue.setCustomFieldValue(deadlineField, newDeadline)
+                        def changeHolder = new DefaultIssueChangeHolder()
+                        deadlineField.updateValue(null, assignedIssue, new ModifiedValue(currentDeadline, newDeadline), changeHolder)
+                        log.warn("Deadline updated for issue: " + assignedIssue.getKey())
+                    } else {
+                        log.warn("No current deadline found for issue: " + assignedIssue.getKey())
+                    }
+                } else {
+                    log.warn("Deadline field is missing or empty for issue: " + assignedIssue.getKey())
+                }
+            }
+        }
+    }
+}
+
