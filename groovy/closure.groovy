@@ -3,7 +3,6 @@ def saySomething(Closure c) {
     c()
     println 'after'
 }
-
 saySomething {
     println 'I am in closure'
 }
