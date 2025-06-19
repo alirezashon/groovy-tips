@@ -1,6 +1,5 @@
 import groovy.json.JsonSlurper
 
-// آدرس API
 def url = 'https://jsonplaceholder.typicode.com/users'
 
 // ارسال درخواست GET
